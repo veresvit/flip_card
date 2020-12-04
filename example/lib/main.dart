@@ -42,6 +42,7 @@ class HomePage extends StatelessWidget {
       child: FlipCard(
         direction: FlipDirection.HORIZONTAL,
         speed: 1000,
+        flipOnTouch: false,
         onFlipDone: (status) {
           print(status);
         },

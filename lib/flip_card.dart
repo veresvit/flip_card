@@ -75,17 +75,19 @@ class FlipCard extends StatefulWidget {
   /// }
   ///```
   final bool flipOnTouch;
+  final bool flipBySwipe;
 
-  const FlipCard(
-      {Key key,
-      @required this.front,
-      @required this.back,
-      this.speed = 500,
-      this.onFlip,
-      this.onFlipDone,
-      this.direction = FlipDirection.HORIZONTAL,
-      this.flipOnTouch = true})
-      : super(key: key);
+  const FlipCard({
+    Key key,
+    @required this.front,
+    @required this.back,
+    this.speed = 500,
+    this.onFlip,
+    this.onFlipDone,
+    this.direction = FlipDirection.HORIZONTAL,
+    this.flipOnTouch = true,
+    this.flipBySwipe = true,
+  }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -100,48 +102,25 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
 
   bool isFront = true;
 
+  bool _swipeFlipped = false;
+
   @override
   void initState() {
     super.initState();
-    controller = AnimationController(
-      duration: Duration(milliseconds: widget.speed),
-      vsync: this,
-    );
-    _frontRotation = TweenSequence(
-      <TweenSequenceItem<double>>[
-        TweenSequenceItem<double>(
-          tween: Tween(begin: 0.0, end: pi / 2).chain(CurveTween(curve: Curves.easeIn)),
-          weight: 50.0,
-        ),
-        TweenSequenceItem<double>(
-          tween: ConstantTween<double>(pi / 2),
-          weight: 50.0,
-        ),
-      ],
-    ).animate(controller);
-    _backRotation = TweenSequence(
-      <TweenSequenceItem<double>>[
-        TweenSequenceItem<double>(
-          tween: ConstantTween<double>(pi / 2),
-          weight: 50.0,
-        ),
-        TweenSequenceItem<double>(
-          tween: Tween(begin: -pi / 2, end: 0.0).chain(CurveTween(curve: Curves.easeOut)),
-          weight: 50.0,
-        ),
-      ],
-    ).animate(controller);
-    controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
-        if (widget.onFlipDone != null) widget.onFlipDone(isFront);
-      }
-    });
+    controller = AnimationController(duration: Duration(milliseconds: 500), vsync: this);
+    _updateRotations(true);
   }
 
-  void toggleCard() {
-    if (widget.onFlip != null) {
-      widget.onFlip();
-    }
+  void leftRotation() {
+    toggleCard(false);
+  }
+
+  void rightRotation() {
+    toggleCard(true);
+  }
+
+  void toggleCard(bool isRightTap) {
+    _updateRotations(isRightTap);
     if (isFront) {
       controller.forward();
     } else {
@@ -164,14 +143,31 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
     );
 
     // if we need to flip the card on taps, wrap the content
-    if (widget.flipOnTouch) {
-      return GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: toggleCard,
-        child: child,
-      );
-    }
-    return child;
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: widget.flipOnTouch ? _tapReaction : null,
+      onHorizontalDragUpdate:
+          widget.flipBySwipe && widget.direction == FlipDirection.HORIZONTAL
+              ? _swipeReaction
+              : null,
+      onVerticalDragUpdate:
+          widget.flipBySwipe && widget.direction == FlipDirection.VERTICAL
+              ? _swipeReaction
+              : null,
+      onHorizontalDragEnd: widget.direction == FlipDirection.HORIZONTAL
+          ? (details) => _swipeFlipped = false
+          : null,
+      onVerticalDragEnd: widget.direction == FlipDirection.VERTICAL
+          ? (details) => _swipeFlipped = false
+          : null,
+      child: child,
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   Widget _buildContent({@required bool front}) {
@@ -189,9 +185,62 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
     );
   }
 
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
+  void _tapReaction() => toggleCard(!isFront);
+
+  void _swipeReaction(details) {
+    if (_swipeFlipped) return;
+
+    var delta = widget.direction == FlipDirection.HORIZONTAL
+        ? details.delta.dx
+        : details.delta.dy;
+
+    if (delta > 10) {
+      if (widget.direction == FlipDirection.HORIZONTAL) {
+        rightRotation();
+      } else {
+        leftRotation();
+      }
+
+      _swipeFlipped = true;
+    } else if (delta < -10) {
+      if (widget.direction == FlipDirection.HORIZONTAL) {
+        leftRotation();
+      } else {
+        rightRotation();
+      }
+      _swipeFlipped = true;
+    }
+  }
+
+  _updateRotations(bool isRightTap) {
+    setState(() {
+      bool rotateToLeft = (isFront && !isRightTap) || !isFront && isRightTap;
+      _frontRotation = TweenSequence(
+        <TweenSequenceItem<double>>[
+          TweenSequenceItem<double>(
+            tween: Tween(begin: 0.0, end: rotateToLeft ? (pi / 2) : (-pi / 2))
+                .chain(CurveTween(curve: Curves.linear)),
+            weight: 50.0,
+          ),
+          TweenSequenceItem<double>(
+            tween: ConstantTween<double>(rotateToLeft ? (-pi / 2) : (pi / 2)),
+            weight: 50.0,
+          ),
+        ],
+      ).animate(controller);
+      _backRotation = TweenSequence(
+        <TweenSequenceItem<double>>[
+          TweenSequenceItem<double>(
+            tween: ConstantTween<double>(rotateToLeft ? (pi / 2) : (-pi / 2)),
+            weight: 50.0,
+          ),
+          TweenSequenceItem<double>(
+            tween: Tween(begin: rotateToLeft ? (-pi / 2) : (pi / 2), end: 0.0)
+                .chain(CurveTween(curve: Curves.linear)),
+            weight: 50.0,
+          ),
+        ],
+      ).animate(controller);
+    });
   }
 }

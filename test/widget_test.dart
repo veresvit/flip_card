@@ -3,10 +3,9 @@
 // provides. For example, you can send tap and scroll gestures. You can also use WidgetTester to
 // find child widgets in the widget tree, read text, and verify that the values of widget properties
 // are correct.
+import 'package:flip_card/flip_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:flip_card/flip_card.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
@@ -31,8 +30,7 @@ void main() {
     await tester.tap(find.byType(Stack));
   });
 
-  testWidgets('background interactions are ignored',
-      (WidgetTester tester) async {
+  testWidgets('background interactions are ignored', (WidgetTester tester) async {
     // check that background touches are blocked
     bool backgroundTouched = false;
 
@@ -91,7 +89,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(state.isFront, true); // should not have turned by tapping
 
-      state.toggleCard();
+      state.toggleCard(true);
       await tester.pumpAndSettle();
       expect(state.isFront, false);
     });
