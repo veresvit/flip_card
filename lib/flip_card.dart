@@ -48,7 +48,7 @@ class FlipCard extends StatefulWidget {
   /// The amount of milliseconds a turn animation will take.
   final int speed;
   final FlipDirection direction;
-  final VoidCallback onFlip;
+  final BoolCallback onFlip;
   final BoolCallback onFlipDone;
 
   /// When enabled, the card will flip automatically when touched. This behavior
@@ -107,7 +107,12 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
   @override
   void initState() {
     super.initState();
-    controller = AnimationController(duration: Duration(milliseconds: 500), vsync: this);
+    controller = AnimationController(duration: Duration(milliseconds: 500), vsync: this)
+      ..addStatusListener((AnimationStatus status) {
+        if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+          if (widget.onFlipDone != null) widget.onFlipDone(isFront);
+        }
+      });
     _updateRotations(true);
   }
 
@@ -130,6 +135,8 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
     setState(() {
       isFront = !isFront;
     });
+
+    if (widget.onFlip != null) widget.onFlip(isFront);
   }
 
   @override
@@ -147,19 +154,10 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
       behavior: HitTestBehavior.translucent,
       onTap: widget.flipOnTouch ? _tapReaction : null,
       onHorizontalDragUpdate:
-          widget.flipBySwipe && widget.direction == FlipDirection.HORIZONTAL
-              ? _swipeReaction
-              : null,
-      onVerticalDragUpdate:
-          widget.flipBySwipe && widget.direction == FlipDirection.VERTICAL
-              ? _swipeReaction
-              : null,
-      onHorizontalDragEnd: widget.direction == FlipDirection.HORIZONTAL
-          ? (details) => _swipeFlipped = false
-          : null,
-      onVerticalDragEnd: widget.direction == FlipDirection.VERTICAL
-          ? (details) => _swipeFlipped = false
-          : null,
+          widget.flipBySwipe && widget.direction == FlipDirection.HORIZONTAL ? _swipeReaction : null,
+      onVerticalDragUpdate: widget.flipBySwipe && widget.direction == FlipDirection.VERTICAL ? _swipeReaction : null,
+      onHorizontalDragEnd: widget.direction == FlipDirection.HORIZONTAL ? (details) => _swipeFlipped = false : null,
+      onVerticalDragEnd: widget.direction == FlipDirection.VERTICAL ? (details) => _swipeFlipped = false : null,
       child: child,
     );
   }
@@ -190,9 +188,7 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
   void _swipeReaction(details) {
     if (_swipeFlipped) return;
 
-    var delta = widget.direction == FlipDirection.HORIZONTAL
-        ? details.delta.dx
-        : details.delta.dy;
+    var delta = widget.direction == FlipDirection.HORIZONTAL ? details.delta.dx : details.delta.dy;
 
     if (delta > 10) {
       if (widget.direction == FlipDirection.HORIZONTAL) {
@@ -218,8 +214,7 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
       _frontRotation = TweenSequence(
         <TweenSequenceItem<double>>[
           TweenSequenceItem<double>(
-            tween: Tween(begin: 0.0, end: rotateToLeft ? (pi / 2) : (-pi / 2))
-                .chain(CurveTween(curve: Curves.linear)),
+            tween: Tween(begin: 0.0, end: rotateToLeft ? (pi / 2) : (-pi / 2)).chain(CurveTween(curve: Curves.linear)),
             weight: 50.0,
           ),
           TweenSequenceItem<double>(
@@ -235,8 +230,7 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
             weight: 50.0,
           ),
           TweenSequenceItem<double>(
-            tween: Tween(begin: rotateToLeft ? (-pi / 2) : (pi / 2), end: 0.0)
-                .chain(CurveTween(curve: Curves.linear)),
+            tween: Tween(begin: rotateToLeft ? (-pi / 2) : (pi / 2), end: 0.0).chain(CurveTween(curve: Curves.linear)),
             weight: 50.0,
           ),
         ],

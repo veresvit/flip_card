@@ -43,8 +43,11 @@ class HomePage extends StatelessWidget {
         direction: FlipDirection.HORIZONTAL,
         speed: 1000,
         flipOnTouch: false,
-        onFlipDone: (status) {
-          print(status);
+        onFlipDone: (isFront) {
+          print("On Flip done, is front: $isFront");
+        },
+        onFlip: (isFront) {
+          print("On Flip, is front: $isFront");
         },
         front: Container(
           decoration: BoxDecoration(
