@@ -5,7 +5,7 @@ author: Vit Veres <veres.vit@gmail.com>
 homepage: https://github.com/veresvit/flip_card/
 
 environment:
-  sdk: ">=2.10.4 <3.0.0"
+  sdk: ">=2.10.0 <3.0.0"
 
 dependencies:
   flutter:
