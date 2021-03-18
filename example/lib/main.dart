@@ -42,7 +42,7 @@ class HomePage extends StatelessWidget {
       child: FlipCard(
         direction: FlipDirection.HORIZONTAL,
         speed: 1000,
-        flipOnTouch: false,
+        flipOnTouch: true,
         onFlipDone: (isFront) {
           print("On Flip done, is front: $isFront");
         },
@@ -57,8 +57,8 @@ class HomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text('Front', style: Theme.of(context).textTheme.headline),
-              Text('Click here to flip back', style: Theme.of(context).textTheme.body1),
+              Text('Front', style: Theme.of(context).textTheme.headline5),
+              Text('Click here to flip back', style: Theme.of(context).textTheme.bodyText1),
             ],
           ),
         ),
@@ -70,8 +70,8 @@ class HomePage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text('Back', style: Theme.of(context).textTheme.headline),
-              Text('Click here to flip front', style: Theme.of(context).textTheme.body1),
+              Text('Back', style: Theme.of(context).textTheme.headline5),
+              Text('Click here to flip front', style: Theme.of(context).textTheme.bodyText2),
             ],
           ),
         ),

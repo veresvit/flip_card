@@ -10,7 +10,7 @@ enum FlipDirection {
 }
 
 class AnimationCard extends StatelessWidget {
-  AnimationCard({this.child, this.animation, this.direction});
+  AnimationCard({required this.child, required this.animation, required this.direction});
 
   final Widget child;
   final Animation<double> animation;
@@ -20,7 +20,7 @@ class AnimationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: animation,
-      builder: (BuildContext context, Widget child) {
+      builder: (context, child) {
         var transform = Matrix4.identity();
         transform.setEntry(3, 2, 0.001);
         if (direction == FlipDirection.VERTICAL) {
@@ -48,8 +48,8 @@ class FlipCard extends StatefulWidget {
   /// The amount of milliseconds a turn animation will take.
   final int speed;
   final FlipDirection direction;
-  final BoolCallback onFlip;
-  final BoolCallback onFlipDone;
+  final BoolCallback? onFlip;
+  final BoolCallback? onFlipDone;
 
   /// When enabled, the card will flip automatically when touched. This behavior
   /// can be disabled if this is not desired. To manually flip a card from your
@@ -78,9 +78,9 @@ class FlipCard extends StatefulWidget {
   final bool flipBySwipe;
 
   const FlipCard({
-    Key key,
-    @required this.front,
-    @required this.back,
+    Key? key,
+    required this.front,
+    required this.back,
     this.speed = 500,
     this.onFlip,
     this.onFlipDone,
@@ -96,9 +96,9 @@ class FlipCard extends StatefulWidget {
 }
 
 class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin {
-  AnimationController controller;
-  Animation<double> _frontRotation;
-  Animation<double> _backRotation;
+  late AnimationController controller;
+  late Animation<double> _frontRotation;
+  late Animation<double> _backRotation;
 
   bool isFront = true;
 
@@ -110,7 +110,7 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
     controller = AnimationController(duration: Duration(milliseconds: 500), vsync: this)
       ..addStatusListener((AnimationStatus status) {
         if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
-          if (widget.onFlipDone != null) widget.onFlipDone(isFront);
+          if (widget.onFlipDone != null) widget.onFlipDone!(isFront);
         }
       });
     _updateRotations(true);
@@ -136,7 +136,7 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
       isFront = !isFront;
     });
 
-    if (widget.onFlip != null) widget.onFlip(isFront);
+    if (widget.onFlip != null) widget.onFlip!(isFront);
   }
 
   @override
@@ -168,7 +168,7 @@ class FlipCardState extends State<FlipCard> with SingleTickerProviderStateMixin 
     super.dispose();
   }
 
-  Widget _buildContent({@required bool front}) {
+  Widget _buildContent({required bool front}) {
     // pointer events that would reach the backside of the card should be
     // ignored
     return IgnorePointer(
